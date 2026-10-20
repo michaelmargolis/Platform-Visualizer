@@ -1,0 +1,143 @@
+{
+  "window": {
+    "width": 800,
+    "height": 480,
+    "fullscreen": false
+  },
+  "update_hz": 20,
+  "udp": {
+    "port": 10020,
+    "stale_seconds": 0.5
+  },
+  "camera": {
+    "azimuth_deg": -38.0,
+    "radius_mm": 3055.0,
+    "height_mm": 1450.0,
+    "target_xyz_mm": [
+      80.0,
+      0.0,
+      430.0
+    ],
+    "azimuth_step_deg": 5.0,
+    "height_step_mm": 100.0,
+    "height_min_mm": 300.0,
+    "height_max_mm": 3000.0,
+    "radius_step_mm": 150.0,
+    "radius_min_mm": 1600.0,
+    "radius_max_mm": 5000.0,
+    "view_z_step_mm": 50.0,
+    "view_z_min_mm": -600.0,
+    "view_z_max_mm": 600.0,
+    "elevation_step_deg": 5.0,
+    "elevation_min_deg": -90.0,
+    "elevation_max_deg": 90.0,
+    "ortho_zoom_step": 1.1
+  },
+  "show_channel_numbers": true,
+  "platform_visual": {
+    "file": "platforms/mdx_suspended/visual.json"
+  },
+  "moving_platform": {
+    "enabled": true,
+    "model": "assets/mdx_moving_platform.egg",
+    "procedural_fallback": true,
+    "thickness_mm": 40.0
+  },
+  "fixed_frame": {
+    "width_mm": 50.0,
+    "height_mm": 70.0
+  },
+  "chair": {
+    "enabled": true,
+    "model": "assets/seat_lowpoly.egg",
+    "yaw_offset_deg": 180.0,
+    "x_offset_mm": 0.0,
+    "y_offset_mm": 0.0,
+    "support": {
+      "width_mm": 325.661,
+      "depth_mm": 303.876,
+      "height_mm": 300.0,
+      "colour": [
+        0.17,
+        0.17,
+        0.17,
+        1.0
+      ]
+    }
+  },
+  "pressure_model": {
+    "files": [
+      "pressure_data/PtoD_40.csv",
+      "pressure_data/PtoD_80.csv"
+    ],
+    "empirical_load": 40.0,
+    "direction_deadband_mbar": 25.0,
+    "slew_enabled": true,
+    "max_contraction_rate_mm_s": 100.0,
+    "max_extension_rate_mm_s": 100.0
+  },
+  "fixed_platform": {
+    "enabled": false,
+    "procedural_fallback": true
+  },
+  "platform_profiles": {
+    "platform_v2": {
+      "platform_visual": {
+        "file": "platforms/mdx_suspended/visual.json"
+      },
+      "moving_platform": {
+        "enabled": true,
+        "model": "assets/mdx_moving_platform.egg",
+        "thickness_mm": 40.0,
+        "procedural_fallback": true
+      },
+      "fixed_platform": {
+        "enabled": false
+      },
+      "chair": {
+        "model": "assets/seat_lowpoly.egg",
+        "support": {
+          "height_mm": 300.0,
+          "colour": [
+            0.17,
+            0.17,
+            0.17,
+            1.0
+          ]
+        }
+      }
+    },
+    "chair_v2": {
+      "platform_visual": {
+        "file": "platforms/chair_v2/visual.json"
+      },
+      "geometry": {
+        "use_visual_geometry_for_solver": true
+      },
+      "moving_platform": {
+        "enabled": true,
+        "model": "assets/chair_v2_moving_platform.egg",
+        "thickness_mm": 40.0,
+        "procedural_fallback": true
+      },
+      "fixed_platform": {
+        "enabled": true,
+        "model": "assets/chair_v2_base_and_uprights.egg",
+        "procedural_fallback": true
+      },
+      "chair": {
+        "model": "assets/seat_lowpoly.egg",
+        "support": {
+          "height_mm": 250.0,
+          "colour": [
+            0.17,
+            0.17,
+            0.17,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "selected_platform": "platform_v2"
+}

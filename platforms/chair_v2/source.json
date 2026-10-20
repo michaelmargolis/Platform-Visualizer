@@ -1,0 +1,186 @@
+{
+  "format": "mdxsat_visualizer_chair_v2_cad_v1",
+  "units": "mm",
+  "coordinate_system": {
+    "x": "platform X",
+    "y": "platform Y",
+    "z": "platform Z"
+  },
+  "notes": [
+    "Fixed geometry from corrected old-platform SOLIDWORKS export.",
+    "Only Base Frame sections outer four weldment segments are retained.",
+    "Moving outline and attachment XY are from Moving platform chair v2 for panda3d.dxf.",
+    "Moving platform is a rigid local model: top/reference Z=0, underside Z=-40 mm.",
+    "Measured relaxed platform tilt (~0.12 deg; front/rear top heights 195/193 mm above base top) is not baked into the mesh."
+  ],
+  "fixed_attachments": [
+    {
+      "name": "upper 0",
+      "x": 380.0,
+      "y": 518.0,
+      "z": 1048.0
+    },
+    {
+      "name": "upper 1",
+      "x": 259.0,
+      "y": 588.0,
+      "z": 1048.0
+    },
+    {
+      "name": "upper 2",
+      "x": -638.0,
+      "y": 70.0,
+      "z": 1048.0
+    },
+    {
+      "name": "upper 3",
+      "x": -638.0,
+      "y": -70.0,
+      "z": 1048.0
+    },
+    {
+      "name": "upper 4",
+      "x": 259.0,
+      "y": -588.0,
+      "z": 1048.0
+    },
+    {
+      "name": "upper 5",
+      "x": 380.0,
+      "y": -518.0,
+      "z": 1048.0
+    }
+  ],
+  "moving_attachments_local": [
+    {
+      "name": "lower 0",
+      "x": 760.5172058904908,
+      "y": 173.0447350659807,
+      "z": 0.0
+    },
+    {
+      "name": "lower 1",
+      "x": -252.5876564662003,
+      "y": 582.6574312511995,
+      "z": 0.0
+    },
+    {
+      "name": "lower 2",
+      "x": -378.5133879970002,
+      "y": 509.9546302658994,
+      "z": 0.0
+    },
+    {
+      "name": "lower 3",
+      "x": -378.513387997,
+      "y": -510.0430218982999,
+      "z": 0.0
+    },
+    {
+      "name": "lower 4",
+      "x": -252.5876564662,
+      "y": -582.7458228835999,
+      "z": 0.0
+    },
+    {
+      "name": "lower 5",
+      "x": 760.5172058905999,
+      "y": -169.4479084244,
+      "z": 0.0
+    }
+  ],
+  "uprights": [
+    {
+      "name": "upright 2",
+      "x": 306.0,
+      "y": 600.0,
+      "z": -2.0,
+      "channels": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "upright 1",
+      "x": -623.0,
+      "y": 35.0,
+      "z": -2.0,
+      "channels": [
+        2,
+        3
+      ]
+    },
+    {
+      "name": "upright 3",
+      "x": 286.0,
+      "y": -565.0,
+      "z": -2.0,
+      "channels": [
+        4,
+        5
+      ]
+    }
+  ],
+  "frame_lines": [
+    {
+      "feature": "Base Frame sections",
+      "group": 1,
+      "segment": 1,
+      "start": {
+        "x": -633.0,
+        "y": 570.0,
+        "z": -22.0
+      },
+      "end": {
+        "x": 907.0,
+        "y": 570.0,
+        "z": -22.0
+      }
+    },
+    {
+      "feature": "Base Frame sections",
+      "group": 1,
+      "segment": 2,
+      "start": {
+        "x": 907.0,
+        "y": -570.0,
+        "z": -22.0
+      },
+      "end": {
+        "x": 907.0,
+        "y": 570.0,
+        "z": -22.0
+      }
+    },
+    {
+      "feature": "Base Frame sections",
+      "group": 1,
+      "segment": 3,
+      "start": {
+        "x": -633.0,
+        "y": -570.0,
+        "z": -22.0
+      },
+      "end": {
+        "x": -633.0,
+        "y": 570.0,
+        "z": -22.0
+      }
+    },
+    {
+      "feature": "Base Frame sections",
+      "group": 1,
+      "segment": 4,
+      "start": {
+        "x": -633.0,
+        "y": -570.0,
+        "z": -22.0
+      },
+      "end": {
+        "x": 907.0,
+        "y": -570.0,
+        "z": -22.0
+      }
+    }
+  ]
+}

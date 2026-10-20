@@ -1,0 +1,52 @@
+<CoordinateSystem> { Z-up }
+<Comment> { "Chair V2 moving platform from Moving platform chair v2 for panda3d.dxf; local top/reference plane Z=0; underside Z=-40 mm" }
+
+<VertexPool> platform {
+  <Vertex> 0 { -408.641096 542.542951 0.000000 }
+  <Vertex> 1 { -265.746904 625.042951 0.000000 }
+  <Vertex> 2 { -26.096229 209.955804 0.000000 }
+  <Vertex> 3 { 824.515931 209.955804 0.000000 }
+  <Vertex> 4 { 824.515931 -210.044196 0.000000 }
+  <Vertex> 5 { -26.096229 -210.044196 0.000000 }
+  <Vertex> 6 { -265.746904 -625.131342 0.000000 }
+  <Vertex> 7 { -408.641096 -542.631342 0.000000 }
+  <Vertex> 8 { -216.621817 -210.044196 0.000000 }
+  <Vertex> 9 { -216.621817 209.955804 0.000000 }
+  <Vertex> 10 { -408.641096 542.542951 -40.000000 }
+  <Vertex> 11 { -265.746904 625.042951 -40.000000 }
+  <Vertex> 12 { -26.096229 209.955804 -40.000000 }
+  <Vertex> 13 { 824.515931 209.955804 -40.000000 }
+  <Vertex> 14 { 824.515931 -210.044196 -40.000000 }
+  <Vertex> 15 { -26.096229 -210.044196 -40.000000 }
+  <Vertex> 16 { -265.746904 -625.131342 -40.000000 }
+  <Vertex> 17 { -408.641096 -542.631342 -40.000000 }
+  <Vertex> 18 { -216.621817 -210.044196 -40.000000 }
+  <Vertex> 19 { -216.621817 209.955804 -40.000000 }
+}
+
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 9 0 1 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 11 10 19 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 9 1 2 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 12 11 19 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 9 2 3 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 13 12 19 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 9 3 4 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 14 13 19 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 9 4 5 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 15 14 19 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 5 6 7 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 17 16 15 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 5 7 8 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 18 17 15 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.55 0.07 0.05 1.0 } <VertexRef> { 5 8 9 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.30 0.035 0.03 1.0 } <VertexRef> { 19 18 15 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 0 10 11 1 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 1 11 12 2 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 2 12 13 3 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 3 13 14 4 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 4 14 15 5 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 5 15 16 6 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 6 16 17 7 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 7 17 18 8 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 8 18 19 9 <Ref> { platform } } }
+<Polygon> { <RGBA> { 0.42 0.05 0.04 1.0 } <VertexRef> { 9 19 10 0 <Ref> { platform } } }

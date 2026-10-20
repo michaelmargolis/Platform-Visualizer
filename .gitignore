@@ -1,0 +1,40 @@
+# Python bytecode, caches and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# Local IDE and OS metadata
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Generated build output, diagnostics and local recording captures
+build/
+dist/
+*.egg-info/
+*.zip
+logs/
+captures/
+*.log
+*.tmp
+*.bak
+*.orig
+*.swp
+*_telemetry_????????_??????.csv
+
+# Keep checked-in Panda3D .egg meshes, reference CSVs and docs/demo*.gif:
+# these are intentional resources, not Python build output.

@@ -1,0 +1,46 @@
+{
+  "format":"mdxsat_sw_platform_geometry_v2",
+  "units":"mm",
+  "coordinate_system":{
+    "x":"SOLIDWORKS Z",
+    "y":"-SOLIDWORKS X",
+    "z":"SOLIDWORKS Y"
+  },
+  "assembly":"nextgen chair.SLDASM",
+  "fixed_attachments":[
+    {"name":"upper 0","x":438,"y":585,"z":1167},
+    {"name":"upper 1","x":291,"y":622,"z":1167},
+    {"name":"upper 2","x":-731,"y":76,"z":1121},
+    {"name":"upper 3","x":-731,"y":-76,"z":1121},
+    {"name":"upper 4","x":289,"y":-654,"z":1167},
+    {"name":"upper 5","x":413,"y":-566,"z":1167}
+  ],
+  "moving_attachments":[
+    {"name":"lower 0","x":716,"y":166,"z":76},
+    {"name":"lower 1","x":-222,"y":609,"z":82},
+    {"name":"lower 2","x":-348,"y":536,"z":82},
+    {"name":"lower 3","x":-347,"y":-536,"z":81},
+    {"name":"lower 4","x":-221,"y":-608,"z":82},
+    {"name":"lower 5","x":716,"y":-166,"z":76}
+  ],
+  "uprights":[
+    {"name":"upright 1","x":374,"y":643,"z":66},
+    {"name":"upright 2","x":-772,"y":0,"z":67},
+    {"name":"upright 3","x":374,"y":-643,"z":66}
+  ],
+  "frame_lines":[
+    {"feature":"Base Frame","group":1,"segment":1,"start":{"x":-942,"y":683,"z":-70},"end":{"x":-942,"y":683,"z":-1870}},
+    {"feature":"Base Frame","group":1,"segment":2,"start":{"x":-942,"y":-683,"z":-70},"end":{"x":-942,"y":-683,"z":-1870}},
+    {"feature":"Base Frame","group":2,"segment":1,"start":{"x":-942,"y":683,"z":-100},"end":{"x":-942,"y":-683,"z":-100}},
+    {"feature":"Base Frame","group":2,"segment":2,"start":{"x":-942,"y":687,"z":-1840},"end":{"x":-942,"y":-687,"z":-1840}},
+    {"feature":"Base Frame","group":5,"segment":1,"start":{"x":-942,"y":-683,"z":-1286},"end":{"x":-942,"y":-418,"z":-1286}},
+    {"feature":"Base Frame","group":5,"segment":2,"start":{"x":-942,"y":683,"z":-1286},"end":{"x":-942,"y":418,"z":-1286}},
+    {"feature":"Base Frame","group":6,"segment":1,"start":{"x":-942,"y":-437,"z":-1286},"end":{"x":-942,"y":-687,"z":-1536}},
+    {"feature":"Base Frame","group":6,"segment":2,"start":{"x":-942,"y":-437,"z":-1286},"end":{"x":-942,"y":-687,"z":-1036}},
+    {"feature":"Base Frame","group":7,"segment":1,"start":{"x":-942,"y":433,"z":-1286},"end":{"x":-942,"y":683,"z":-1536}},
+    {"feature":"Base Frame","group":7,"segment":2,"start":{"x":-942,"y":433,"z":-1286},"end":{"x":-942,"y":683,"z":-1036}},
+    {"feature":"Base Frame","group":8,"segment":1,"start":{"x":-942,"y":0,"z":-100},"end":{"x":-942,"y":0,"z":-451}},
+    {"feature":"Base Frame","group":9,"segment":1,"start":{"x":-942,"y":0,"z":-348},"end":{"x":-942,"y":-248,"z":-100}},
+    {"feature":"Base Frame","group":9,"segment":2,"start":{"x":-942,"y":0,"z":-348},"end":{"x":-942,"y":248,"z":-100}}
+  ]
+}
