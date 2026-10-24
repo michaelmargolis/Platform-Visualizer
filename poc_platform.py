@@ -1,4 +1,4 @@
-# poc_platform.py ver 8
+# poc_platform.py ver 9
 """Load the currently selected POC platform geometry/kinematics."""
 from __future__ import annotations
 
@@ -148,6 +148,11 @@ class PocPlatform:
             self.cfg.LIMITS_1DOF_TRANFORM,
         )
         self.kin = self._kin_module.Kinematics()
+        # Respect an explicit platform-specific axis convention. Without it,
+        # retain the historic POC default used by the chair configurations.
+        axis_flip_mask = getattr(self.cfg, "AXIS_FLIP_MASK", None)
+        if axis_flip_mask is not None:
+            self.kin.set_axis_flip_mask(axis_flip_mask)
         clearance_offset = float(getattr(self.cfg, "PLATFORM_CLEARANCE_OFFSET", 0.0))
         extension_reserve = getattr(self.cfg, "MUSCLE_EXTENSION_RESERVE", None)
         self.extension_reserve = None if extension_reserve is None else float(extension_reserve)
