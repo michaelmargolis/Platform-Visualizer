@@ -1,4 +1,4 @@
-# platforms.py ver 5
+# platforms.py ver 6
 """Physical-platform metadata used by the prototype selector.
 
 The module paths match the current POC kinematics configuration. The canonical
@@ -16,7 +16,7 @@ PLATFORMS = {
     },
     "chair_v3": {
         "name": "V3 Chair",
-        "sop_config_module": "kinematics.cfg_SuspendedChair",
+        "sop_config_module": "kinematics.cfg_SuspendedChairV3",
     },
     "Falcon": {
         "name": "Falcon Platform",

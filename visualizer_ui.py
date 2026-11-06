@@ -85,7 +85,7 @@ class VisualizerUI:
                   "W/S or up/down: top/bottom orbit\n"
                   "+/-: camera zoom\n"
                   "O: perspective/ortho\n"
-                  "1/2/3: top/front/side views\n"
+                  "1/2/3/4: top/front/side/rear views\n"
                   "Ctrl +/-: window size\n"
                   "Ctrl 0: reset window\n"
                   "PgUp/PgDn: view up/down\n\n"

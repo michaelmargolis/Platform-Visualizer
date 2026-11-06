@@ -1,4 +1,4 @@
-# poc_platform.py ver 9
+# poc_platform.py ver 10
 """Load the currently selected POC platform geometry/kinematics."""
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ BUNDLED_POC_FILES = (
     "kinematics/kinematics_V3.py",
     "kinematics/cfg_SuspendedPlatformMdx.py",
     "kinematics/cfg_SuspendedChair.py",
+    "kinematics/cfg_SuspendedChairV3.py",
     "kinematics/cfg_SuspendedChairFalcon.py",
 )
 
@@ -157,6 +158,7 @@ class PocPlatform:
         extension_reserve = getattr(self.cfg, "MUSCLE_EXTENSION_RESERVE", None)
         self.extension_reserve = None if extension_reserve is None else float(extension_reserve)
         set_geometry_params = inspect.signature(self.kin.set_geometry).parameters
+        kwargs = {"clearance_offset": clearance_offset}
         if extension_reserve is not None:
             if "muscle_extension_reserve" not in set_geometry_params:
                 raise RuntimeError(
@@ -164,20 +166,15 @@ class PocPlatform:
                     "kinematics_V3.set_geometry() does not support muscle_extension_reserve. "
                     "Use POC v146 or later."
                 )
-            self.kin.set_geometry(
-                base_coords,
-                platform_coords,
-                params,
-                clearance_offset=clearance_offset,
-                muscle_extension_reserve=self.extension_reserve,
-            )
-        else:
-            self.kin.set_geometry(
-                base_coords,
-                platform_coords,
-                params,
-                clearance_offset=clearance_offset,
-            )
+            kwargs["muscle_extension_reserve"] = self.extension_reserve
+        neutral_offset = float(getattr(self.cfg, "NEUTRAL_HEIGHT_OFFSET_MM", 0.0))
+        if neutral_offset != 0.0:
+            if "neutral_height_offset_mm" not in set_geometry_params:
+                raise RuntimeError(
+                    "Chair V3 requires POC v181+ kinematics with neutral_height_offset_mm"
+                )
+            kwargs["neutral_height_offset_mm"] = neutral_offset
+        self.kin.set_geometry(base_coords, platform_coords, params, **kwargs)
 
         self.base_points = np.asarray(self.kin.base_coords, dtype=float)
         self.platform_local_points = np.asarray(self.kin.platform_local_coords, dtype=float)

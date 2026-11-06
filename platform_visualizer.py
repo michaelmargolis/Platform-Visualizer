@@ -1,4 +1,4 @@
-# platform_visualizer.py ver 48
+# platform_visualizer.py ver 49
 """800x480 Panda3D proof-of-concept for the POC suspended platform emulator."""
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ from twin_udp import TwinUdpReceiver
 from easyip_receiver import EasyIpReceiver
 from demo_motion import CannedMotion
 from poc_platform import PocPlatform, report_poc_bundle_differences
+from platform_identity import TwinPlatformSelector
+from platform_profiles import effective_platform_profiles
 from pressure_model import EmpiricalPressureModel, MuscleDynamics
 from udp_diagnostics import PacketDiagnostics
 
@@ -318,32 +320,20 @@ class PlatformVisualizer(ShowBase):
         self.orthographic_lens.setNearFar(10.0, 10000.0)
         self.projection = "perspective"
 
-        self.platform = PocPlatform(poc_root, selected_platform=selected_platform)
-        profiles = self.app_config.get("platform_profiles", {})
-        self.platform_profile = dict(profiles.get(self.platform.selected_platform, {}))
-        if self.platform_profile:
-            print(f"Visualizer profile: {self.platform.selected_platform}")
-        else:
-            print(f"Visualizer profile: default ({self.platform.selected_platform})")
-
-        def merged_section(name):
-            merged = dict(self.app_config.get(name, {}))
-            merged.update(self.platform_profile.get(name, {}))
-            return merged
-
-        self.platform_visual_cfg = merged_section("platform_visual")
-        self.moving_platform_cfg = merged_section("moving_platform")
-        self.fixed_platform_cfg = merged_section("fixed_platform")
-        self.fixed_frame_cfg = merged_section("fixed_frame")
-        self.chair_cfg = merged_section("chair")
-        # A platform may override only support height without losing the global
-        # width, depth or colour settings.
-        self.chair_cfg["support"] = {
-            **self.app_config.get("chair", {}).get("support", {}),
-            **self.platform_profile.get("chair", {}).get("support", {}),
-        }
-        self.geometry_cfg = merged_section("geometry")
-
+        self.platform_profiles = effective_platform_profiles(self.app_config)
+        self.poc_root = Path(poc_root).resolve()
+        self.visual_override = visual_override
+        self.platform = PocPlatform(self.poc_root, selected_platform=selected_platform)
+        self._install_platform_bundle(self._prepare_platform_bundle(self.platform, visual_override))
+        ucfg = self.app_config.get("udp", {})
+        self.auto_switch_platform = bool(ucfg.get("auto_switch_platform", True)) and not visual_override
+        self.twin_platform_selector = TwinPlatformSelector(
+            self.platform._load_platform_registry(),
+            self.platform_profiles,
+            self.platform.selected_platform,
+            confirmation_packets=ucfg.get("platform_confirm_packets", 3),
+        )
+        self._last_switch_error = None
         self.pose = np.zeros(6, dtype=float)
         self.mode = "DEMO"
         self.demo = CannedMotion(self.platform.bounds); self.demo_t0 = time.monotonic(); self.demo_stage = "HEAVE"
@@ -395,70 +385,6 @@ class PlatformVisualizer(ShowBase):
         self.packet_diagnostics = PacketDiagnostics()
         self.packet_diag = None
 
-        vcfg = self.platform_visual_cfg
-        visual_path = Path(visual_override) if visual_override else Path(vcfg["file"])
-        if not visual_path.is_absolute():
-            visual_path = self.config_path.parent / visual_path
-        self.visual = load_visual_geometry(visual_path)
-        if bool(self.geometry_cfg.get("use_visual_geometry_for_solver", False)):
-            if self.visual.moving_attachments is None:
-                raise ValueError(
-                    f"Visual geometry {visual_path} cannot override solver geometry without moving attachments"
-                )
-            self.platform.apply_visual_geometry(
-                self.visual.fixed_attachments, self.visual.moving_attachments
-            )
-        if not np.allclose(self.visual.fixed_attachments, self.platform.base_points, atol=0.01):
-            report_attachment_mismatch(
-                "fixed", self.visual.fixed_attachments, self.platform.base_points,
-                self.platform, visual_path,
-            )
-            raise ValueError(
-                f"Compiled visual geometry {visual_path} does not match the current POC fixed attachment coordinates; "
-                "see the indexed coordinate differences above"
-            )
-        if self.visual.moving_attachments is not None and not np.allclose(
-            self.visual.moving_attachments, self.platform.platform_local_points, atol=0.01
-        ):
-            report_attachment_mismatch(
-                "moving", self.visual.moving_attachments, self.platform.platform_local_points,
-                self.platform, visual_path,
-            )
-            raise ValueError(
-                f"Compiled visual geometry {visual_path} does not match the current POC moving attachment coordinates; "
-                "see the indexed coordinate differences above"
-            )
-        # MDX uses the actual CAD parked reference plane (outside the normal
-        # +-80 mm operational heave range); other platforms keep the old solve.
-        self.parked_target_lengths = np.full(6, float(self.platform.cfg.MUSCLE_MAX_LENGTH))
-        self.parked_pose, self.parked_solver_rms = parked_pose_for_platform(self.platform)
-        if self.parked_solver_rms > 1.0:
-            print(f"WARNING: parked muscle lengths differ from full extension "
-                  f"(RMS error: {self.parked_solver_rms:.1f} mm)")
-        if self.platform.selected_platform == "platform_v2":
-            print(f"MDX CAD parked pose: heave={self.parked_pose[2]:.1f} mm, "
-                  f"length RMS={self.parked_solver_rms:.2f} mm")
-        self.visual_path = visual_path.resolve()
-        self.geometry_name = self.visual_path.name
-        self.source_name = self.visual.source_file
-        self.source_hash = self.visual.source_sha256
-        self.source_path = self.visual_path.parent / self.source_name
-        self.source_hash_state = "not checked"
-        if self.source_path.is_file() and self.source_hash:
-            actual_hash = hashlib.sha256(self.source_path.read_bytes()).hexdigest()
-            self.source_hash_state = "OK" if actual_hash == self.source_hash else "MISMATCH"
-            if actual_hash != self.source_hash:
-                print("WARNING: compiled visual geometry is stale:")
-                print(f"  source file: {self.source_path}")
-                print(f"  JSON hash  : {self.source_hash}")
-                print(f"  source hash: {actual_hash}")
-        elif self.source_path.is_file():
-            self.source_hash_state = "JSON has no hash"
-        else:
-            self.source_hash_state = "source not found"
-
-        print(f"Visualizer geometry: {self.visual_path} (source hash: {self.source_hash_state})")
-
         ccfg = self.app_config["camera"]
         # Open one right-arrow step clockwise from the configured camera angle.
         # Reset Camera/Home returns to this same starting view.
@@ -495,31 +421,11 @@ class PlatformVisualizer(ShowBase):
         self.camera_view_z_min = float(ccfg.get("view_z_min_mm", -600.0))
         self.camera_view_z_max = float(ccfg.get("view_z_max_mm", 600.0))
 
-        self.fixed_root = self.render.attachNewNode("fixed")
-        self.dynamic_root = self.render.attachNewNode("dynamic")
-        self.labels_root = self.render.attachNewNode("labels")
-        # One platform-local transform for the visual deck and its clevises.
-        # This remains independent of camera/screen UI and POC kinematics.
-        self.platform_model_mount_np = self.dynamic_root.attachNewNode("moving-platform-mount")
-        self.mdx_deck_top_z = (mdx_deck_top_z(self.platform.platform_local_points)
-                               if self.platform.selected_platform == "platform_v2" else 0.0)
-        self.platform_surface_np = None; self.platform_outline_np = None; self.muscles_np = None
-        self.pose_diff_np = None
+        self.numbers_visible = False  # N toggles channel labels
         self.pose_diff_enabled = False
-        self.pose_diff_pose = None
-        self.platform_model_np = None
-        self.use_platform_model = False
-        self.fixed_model_np = None
-        self.use_fixed_model = False
-        self.moving_markers = []
-        self.numbers_visible = False  # Start with labels hidden; N toggles them
-        self.chair_np = None
-        self.chair_mount_np = None
-        self.chair_support_np = None
-        self.chair_offset_np = None
-        self.chair_local_origin = None
-
-        self._setup_lights(); self._build_fixed_model(); self._build_fixed_scene(); self._build_labels(); self._build_moving_markers(); self._build_moving_platform_model(); self._build_chair()
+        self._create_platform_scene()
+        self._setup_lights()
+        self._build_platform_scene()
         self._build_ui(); self._setup_keys(); self._apply_camera(); self._update_dynamic_scene()
         if self.receiver is None and not demo_only:
             self.ui.show_input_chooser()
@@ -527,6 +433,166 @@ class PlatformVisualizer(ShowBase):
         self._last_status_time = 0.0; self._frames = 0; self._fps = 0.0; self._fps_t0 = time.monotonic()
         self.taskMgr.add(self._update_task, "platform-update", sort=20)
         self.accept("window-event", self._window_event)
+
+    def _prepare_platform_bundle(self, platform, visual_override=None):
+        profiles = getattr(self, "platform_profiles", effective_platform_profiles(self.app_config))
+        key = platform.selected_platform
+        if key not in profiles and visual_override is None:
+            raise ValueError(f"No visualizer profile for platform {key!r}")
+        profile = dict(profiles.get(key, {}))
+
+        def merged_section(name):
+            merged = dict(self.app_config.get(name, {}))
+            merged.update(profile.get(name, {}))
+            return merged
+
+        settings = {name + "_cfg": merged_section(name) for name in (
+            "platform_visual", "moving_platform", "fixed_platform", "fixed_frame", "chair", "geometry"
+        )}
+        settings["chair_cfg"]["support"] = {
+            **self.app_config.get("chair", {}).get("support", {}),
+            **profile.get("chair", {}).get("support", {}),
+        }
+        vcfg = settings["platform_visual_cfg"]
+        visual_path = Path(visual_override) if visual_override else Path(vcfg["file"])
+        if not visual_path.is_absolute():
+            visual_path = self.config_path.parent / visual_path
+        visual_path = visual_path.resolve()
+        visual = load_visual_geometry(visual_path)
+        if bool(settings["geometry_cfg"].get("use_visual_geometry_for_solver", False)):
+            if visual.moving_attachments is None:
+                raise ValueError(f"Visual geometry {visual_path} lacks moving attachments")
+            platform.apply_visual_geometry(visual.fixed_attachments, visual.moving_attachments)
+        if not np.allclose(visual.fixed_attachments, platform.base_points, atol=0.01):
+            report_attachment_mismatch("fixed", visual.fixed_attachments, platform.base_points,
+                                       platform, visual_path)
+            raise ValueError(f"Fixed attachments mismatch for {key!r} in {visual_path}")
+        if visual.moving_attachments is not None and not np.allclose(
+            visual.moving_attachments, platform.platform_local_points, atol=0.01
+        ):
+            report_attachment_mismatch("moving", visual.moving_attachments, platform.platform_local_points,
+                                       platform, visual_path)
+            raise ValueError(f"Moving attachments mismatch for {key!r} in {visual_path}")
+        # Do not tear down the old scene if a mandatory model is missing.
+        chair_cfg = settings["chair_cfg"]
+        if chair_cfg.get("enabled", False):
+            chair_path = Path(chair_cfg.get("model", "assets/seat_lowpoly.egg"))
+            if not chair_path.is_absolute():
+                chair_path = self.config_path.parent / chair_path
+            if not chair_path.is_file():
+                raise FileNotFoundError(f"Chair visual asset is missing: {chair_path}")
+
+        parked_target = np.full(6, float(platform.cfg.MUSCLE_MAX_LENGTH))
+        parked_pose, parked_rms = parked_pose_for_platform(platform)
+        source_name, source_hash = visual.source_file, visual.source_sha256
+        source_path = visual_path.parent / source_name
+        if source_path.is_file() and source_hash:
+            actual = hashlib.sha256(source_path.read_bytes()).hexdigest()
+            source_state = "OK" if actual == source_hash else "MISMATCH"
+        elif source_path.is_file():
+            source_state = "JSON has no hash"
+        else:
+            source_state = "source not found"
+        settings.update(
+            platform=platform,
+            platform_profile=profile,
+            visual=visual,
+            parked_target_lengths=parked_target,
+            parked_pose=parked_pose,
+            parked_solver_rms=parked_rms,
+            visual_path=visual_path,
+            geometry_name=visual_path.name,
+            source_name=source_name,
+            source_hash=source_hash,
+            source_path=source_path,
+            source_hash_state=source_state,
+        )
+        return settings
+
+    def _install_platform_bundle(self, settings):
+        for name, value in settings.items():
+            setattr(self, name, value)
+        print(f"Visualizer profile: {self.platform.selected_platform}")
+        print(f"Visualizer geometry: {self.visual_path} (source hash: {self.source_hash_state})")
+        if self.parked_solver_rms > 1.0:
+            print(f"WARNING: parked lengths differ from full extension "
+                  f"(RMS error: {self.parked_solver_rms:.1f} mm)")
+
+    def _create_platform_scene(self):
+        self.fixed_root = self.render.attachNewNode("fixed")
+        self.dynamic_root = self.render.attachNewNode("dynamic")
+        self.labels_root = self.render.attachNewNode("labels")
+        self.platform_model_mount_np = self.dynamic_root.attachNewNode("moving-platform-mount")
+        self.mdx_deck_top_z = (mdx_deck_top_z(self.platform.platform_local_points)
+                               if self.platform.selected_platform == "platform_v2" else 0.0)
+        self.platform_surface_np = self.platform_outline_np = self.muscles_np = None
+        self.pose_diff_np = None
+        self.pose_diff_pose = None
+        self.platform_model_np = None
+        self.use_platform_model = False
+        self.fixed_model_np = None
+        self.use_fixed_model = False
+        self.moving_markers = []
+        self.chair_np = self.chair_mount_np = None
+        self.chair_support_np = self.chair_offset_np = self.chair_local_origin = None
+
+    def _build_platform_scene(self):
+        self._build_fixed_model()
+        self._build_fixed_scene()
+        self._build_labels()
+        self._build_moving_markers()
+        self._build_moving_platform_model()
+        self._build_chair()
+        if not self.numbers_visible:
+            self.labels_root.hide()
+
+    def _switch_platform(self, key):
+        """Prepare geometry first, then replace only the 3D scene (not the UDP socket/UI)."""
+        if key == self.platform.selected_platform:
+            self.twin_platform_selector.mark_active(key)
+            return
+        if self.visual_override:
+            raise ValueError("Automatic switch unavailable with --platform-visual override")
+        new_platform = PocPlatform(self.poc_root, selected_platform=key)
+        settings = self._prepare_platform_bundle(new_platform)
+        # Keep old visual nodes alive until the new platform has built successfully.
+        old_roots = (self.fixed_root, self.dynamic_root, self.labels_root)
+        old_state = self.__dict__.copy()
+        try:
+            self._install_platform_bundle(settings)
+            self._create_platform_scene()
+            self._build_platform_scene()
+            self.pose = self.parked_pose.copy()
+            self.solver_rms = self.parked_solver_rms
+            self.prop_command_word = None
+            self.pose_diff_pose = None
+            self.last_processed_packet_count = None
+            self.previous_solver_lengths = None
+            self.solver_iterations = self.solver_solve_ms = None
+            self.solver_max_length_delta_mm = None
+            self.solver_peak_length_delta_mm = 0.0
+            self.solver_slew_cap_mm = None
+            self._last_easyip_solve_time = 0.0
+            self.packet_diagnostics.reset()
+            self.packet_diag = None
+            self.pressure_model.reset()
+            self.muscle_dynamics.reset()
+            self.demo = CannedMotion(self.platform.bounds)
+            self.demo_t0 = time.monotonic()
+            self._update_dynamic_scene()
+        except Exception:
+            # Never tear down an existing root if building the replacement
+            # fails partway through creating the new scene graph.
+            for name, old_root in zip(("fixed_root", "dynamic_root", "labels_root"), old_roots):
+                new_root = getattr(self, name, None)
+                if new_root is not None and new_root is not old_root:
+                    new_root.removeNode()
+            self.__dict__.update(old_state)
+            raise
+        for root in old_roots:
+            root.removeNode()
+        self.twin_platform_selector.mark_active(key)
+        print(f"TWIN platform switched to {key!r}; new pose/solver history initialized", flush=True)
 
     def _setup_lights(self):
         amb = AmbientLight("ambient"); amb.setColor((0.58, 0.58, 0.62, 1.0)); self.render.setLight(self.render.attachNewNode(amb))
@@ -911,6 +977,7 @@ class PlatformVisualizer(ShowBase):
         self.accept("1", self._snap_camera_view, ["top"])
         self.accept("2", self._snap_camera_view, ["front"])
         self.accept("3", self._snap_camera_view, ["side"])
+        self.accept("4", self._snap_camera_view, ["rear"])
         self.accept("t", self._set_mode, ["DEMO"])
         self.accept("l", self._set_mode, ["LENGTH"])
         self.accept("f", self._set_mode, ["FESTO"])
@@ -999,7 +1066,7 @@ class PlatformVisualizer(ShowBase):
         # At the top pole, azimuth -90 gives screen-right +X and up +Y.
         angles = {"top": (-90.0, 90.0),
                   "front": (0.0, 0.0),
-                  "side": (-90.0, 0.0)}
+                  "side": (-90.0, 0.0), "rear": (180.0, 0.0)}
         self.camera_azimuth, self.camera_elevation = angles[view]
         self._apply_camera()
 
@@ -1134,20 +1201,58 @@ class PlatformVisualizer(ShowBase):
                 self.udp_state = "WAITING"
                 return
 
-        # EasyIP pressure writes carry no platform identifier.  The visualizer's
-        # selected_platform chooses the pressure model/geometry for this source.
+        # EasyIP carries no identity.  Twin may rebuild on stable packet identity.
         if self.input_mode == "twin":
-            platform = str(msg.get("platform", ""))
-            if not self.platform.accepts_platform_id(platform):
-                self.pose_diff_pose = None
-                self._update_pose_diff_scene()
-                self.udp_state = "WRONG PLATFORM"
-                if platform != getattr(self, "_last_twin_rejection", None):
-                    print(f"TWIN platform mismatch: packet={platform!r}; visualizer={getattr(self.platform, 'selected_platform', '?')!r}; "
-                          f"accepted={sorted(getattr(self.platform, 'accepted_platform_ids', ()))!r}", flush=True)
-                    self._last_twin_rejection = platform
-                return
-            self._last_twin_rejection = None
+            selector = getattr(self, "twin_platform_selector", None)
+            if selector is not None:
+                diagnostics = self.receiver.diagnostics() if hasattr(self.receiver, "diagnostics") else {}
+                status, new_key, detail = selector.observe(
+                    msg, diagnostics.get("valid_sender"), packet_count,
+                    receiver_streak=diagnostics.get("valid_identity_streak"),
+                )
+                if status == "reject":
+                    self._last_switch_error = None
+                    self.udp_state = "WRONG PLATFORM"
+                    self.pose_diff_pose = None
+                    self._update_pose_diff_scene()
+                    if detail != self._last_twin_rejection:
+                        print(f"TWIN identity rejected: {detail}", flush=True)
+                        self._last_twin_rejection = detail
+                    return
+                if status != "match":
+                    self.pose_diff_pose = None
+                    self._update_pose_diff_scene()
+                    if not getattr(self, "auto_switch_platform", True):
+                        self.udp_state = "WRONG PLATFORM"
+                        return
+                    if status == "pending":
+                        self.udp_state = "SWITCHING PLATFORM"
+                        # Old-platform lengths must not continue to be displayed
+                        # while incoming packets describe a different geometry.
+                        self.pose = self.parked_pose.copy()
+                        self.solver_rms = self.parked_solver_rms
+                        return
+                    if status == "switch":
+                        try:
+                            self._switch_platform(new_key)
+                        except Exception as exc:
+                            self.udp_state = "PLATFORM ERROR"
+                            self._last_switch_error = str(exc)
+                            if self._last_switch_error != self._last_twin_rejection:
+                                print(f"TWIN cannot switch to {new_key!r}: {exc}", flush=True)
+                                self._last_twin_rejection = self._last_switch_error
+                            selector.clear_pending()
+                            return
+                self._last_twin_rejection = None
+                self._last_switch_error = None
+            else:
+                # Compatibility for older visualizer extensions and headless fakes.
+                platform = str(msg.get("platform_key", msg.get("platform", "")))
+                if not platform or not self.platform.accepts_platform_id(platform):
+                    self.pose_diff_pose = None
+                    self._update_pose_diff_scene()
+                    self.udp_state = "WRONG PLATFORM"
+                    return
 
         self.udp_state = "LIVE"
         self._waiting_for_live_packet = False
@@ -1274,9 +1379,15 @@ class PlatformVisualizer(ShowBase):
         rms = "-" if self.solver_rms is None else f"{self.solver_rms:.2f} mm"
         age_txt = "-" if age is None else f"{age:.2f}s"
         pressure_diag = ""
-        if self.input_mode == "twin" and self.udp_state == "WRONG PLATFORM":
-            platform_msg = str(_msg.get("platform", "?")) if _msg is not None else "?"
-            pressure_diag += f"\nTWIN platform mismatch: packet={platform_msg!r}, selected={self.platform.selected_platform!r}"
+        if self.input_mode == "twin" and self.udp_state in ("WRONG PLATFORM", "PLATFORM ERROR"):
+            platform_msg = (str(_msg.get("platform_key", _msg.get("platform", "?")))
+                            if _msg is not None else "?")
+            pressure_diag += (f"\nTWIN platform rejected: packet={platform_msg!r}, "
+                              f"selected={self.platform.selected_platform!r}")
+            if self._last_switch_error:
+                pressure_diag += f"\nSwitch error: {self._last_switch_error}"
+        if self.input_mode == "twin" and self.udp_state == "SWITCHING PLATFORM":
+            pressure_diag += f"\nSwitch pending: {getattr(self.twin_platform_selector, 'pending_key', '?')}"
         if self.input_mode == "twin" and self.udp_state == "STALE":
             pressure_diag += "\nTwin packet stale; verify continuous transmission"
         if self.mode == "FESTO":

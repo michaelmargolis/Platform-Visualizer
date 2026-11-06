@@ -1,4 +1,4 @@
-# twin_udp.py ver 5
+# twin_udp.py ver 6
 """POC_TWIN UDP receiver. Keeps only the newest valid complete packet."""
 from __future__ import annotations
 import json
@@ -17,6 +17,9 @@ class TwinUdpReceiver:
         self.datagram_count = 0
         self.rejected_count = 0
         self.last_sender = None
+        self.latest_sender = None
+        self._last_valid_identity = None
+        self.valid_identity_streak = 0
         self.last_reject = ""
         self.last_error = ""
         self._lock = threading.Lock()
@@ -67,7 +70,16 @@ class TwinUdpReceiver:
                 ):
                     raise ValueError("invalid parking_state")
                 with self._lock:
+                    # Count actual consecutive valid datagrams from one sender
+                    # with the same platform ID. The renderer may skip packets.
+                    identity = (sender, msg.get("platform_key"), msg.get("platform"))
+                    if identity == self._last_valid_identity:
+                        self.valid_identity_streak += 1
+                    else:
+                        self._last_valid_identity = identity
+                        self.valid_identity_streak = 1
                     self.latest = msg
+                    self.latest_sender = sender
                     self.latest_arrival = time.monotonic()
                     self.packet_count += 1
                     self.last_error = ""
@@ -90,6 +102,8 @@ class TwinUdpReceiver:
                 "valid_count": self.packet_count,
                 "rejected_count": self.rejected_count,
                 "last_sender": self.last_sender,
+                "valid_sender": self.latest_sender,
+                "valid_identity_streak": self.valid_identity_streak,
                 "last_reject": self.last_reject,
             }
 

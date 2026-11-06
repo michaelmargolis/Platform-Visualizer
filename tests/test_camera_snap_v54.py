@@ -12,8 +12,8 @@ def test_snap_angles_and_key_bindings():
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "PlatformVisualizer")
     snap = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == "_snap_camera_view")
     angles = next(n.value for n in snap.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "angles" for t in n.targets))
-    assert ast.literal_eval(angles) == {"top": (-90.0, 90.0), "front": (0.0, 0.0), "side": (-90.0, 0.0)}
-    for key, view in (("1", "top"), ("2", "front"), ("3", "side")):
+    assert ast.literal_eval(angles) == {"top": (-90.0, 90.0), "front": (0.0, 0.0), "side": (-90.0, 0.0), "rear": (180.0, 0.0)}
+    for key, view in (("1", "top"), ("2", "front"), ("3", "side"), ("4", "rear")):
         assert f'self.accept("{key}", self._snap_camera_view, ["{view}"])' in src
     assert "self._apply_camera()" in ast.get_source_segment(src, snap)
     assert "self.projection =" not in ast.get_source_segment(src, snap)
@@ -21,4 +21,4 @@ def test_snap_angles_and_key_bindings():
 
 
 def test_help_lists_snap_keys():
-    assert "1/2/3: top/front/side views" in (ROOT / "visualizer_ui.py").read_text()
+    assert "1/2/3/4: top/front/side/rear views" in (ROOT / "visualizer_ui.py").read_text()

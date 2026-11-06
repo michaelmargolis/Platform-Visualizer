@@ -13,7 +13,7 @@ A lightweight, standalone **Panda3D visualizer** for the Middlesex University su
 - **EasyIP (UDP):** receive Festo-style pressure commands directly for a pressure-driven visualization.
 - **Pose-difference overlay:** optionally show the outline of POC's applied real-world transform alongside the modelled platform pose. Available with compatible Twin packets only while POC reports the platform **UNPARKED**.
 - **Touchscreen-friendly controls:** on-screen mode, diagnostics, Pose Diff and quit buttons; swipe to adjust the camera, or use keyboard controls.
-- **Two bundled platform profiles:** `platform_v2` and `chair_v2`, with platform geometry and POC kinematics included for standalone use.
+- **Three bundled platform profiles:** `platform_v2`, `chair_v3`, and `chair_v2`, with platform geometry and POC kinematics included for standalone use.
 
 **Scope:** This is a visualization and modelling tool, not a physical platform controller. Pressure-derived pose is an estimate, not a measurement of real platform motion.
 
@@ -159,4 +159,28 @@ For historical implementation and configuration details, see the `README_v*.txt`
 
 Camera elevation is clamped to -90° (bottom) through +90° (top). Press **O** to toggle orthographic view; zoom in this mode changes the orthographic film size. **Home** restores the original view and perspective projection.
 
-Camera snap views use the platform world axes: **front** is viewed from positive X toward the origin; **side** from negative Y with positive X to the right; **top** from positive Z with positive X to the right. Snap views preserve zoom and projection mode.
+Camera snap views (`1` top, `2` front, `3` side, `4` rear) use the platform world axes: **front** looks from positive X toward the origin; **rear** from negative X; **side** from negative Y; **top** from positive Z. Snap views preserve zoom and projection mode.
+
+
+### Automatic platform selection from Twin UDP (v57)
+
+The Twin UDP receiver uses the canonical `platform_key` when present and
+otherwise the legacy `platform` identity. It requires three consecutive fresh
+packets from the same source before rebuilding the scene for a different
+platform. It supports the existing `platform_v2` (MDX Suspended), `chair_v3`
+and legacy `chair_v2` profiles. Unrecognised or unsupported platforms are
+rejected with a diagnostic; the previously selected geometry is retained.
+
+On switching, POC kinematics, visual geometry, fixed/moving models, neutral
+height, parked pose, solver histories and transient pose differences reset;
+the existing input socket, window, camera, touch UI and selected pressure/length
+mode remain available. Length/pressure values are processed only under the
+matching platform configuration. The configured `selected_platform` remains
+the starting profile and the fallback for manually selected EasyIP input.
+
+Optional `app_config.json` key `udp.auto_switch_platform` defaults to `true` and
+`udp.platform_confirm_packets` defaults to `3`. A manual `--platform-visual`
+geometry override disables automatic platform switching to avoid mismatched
+visual geometry. When there is no explicit `chair_v3` visual profile, it uses the existing
+`chair_v2` visual assets automatically, with its own POC V3
+neutral-height offset, separate from the legacy chair_v2 geometry.
