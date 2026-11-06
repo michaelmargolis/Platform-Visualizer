@@ -15,6 +15,8 @@ A lightweight, standalone **Panda3D visualizer** for the Middlesex University su
 - **Touchscreen-friendly controls:** on-screen mode, diagnostics, Pose Diff and quit buttons; swipe to adjust the camera, or use keyboard controls.
 - **Three bundled platform profiles:** `platform_v2`, `chair_v3`, and `chair_v2`, with platform geometry and POC kinematics included for standalone use.
 
+**v58 Roll diagnostics:** With Twin Length input and diagnostics shown (`H`), the status reports the signed applied Roll from the POC/Sim Player packet, the signed solved Roll from the six muscle lengths, and the geometric X-axis rotation. This helps distinguish sign mismatches from front/rear camera mirroring. Bundled Chair-V3 limits now match POC v182+ (Roll/Pitch/Yaw 10/8/9 degrees). No physical or visual Roll sign is changed.
+
 **Scope:** This is a visualization and modelling tool, not a physical platform controller. Pressure-derived pose is an estimate, not a measurement of real platform motion.
 
 ## Installation

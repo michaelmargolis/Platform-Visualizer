@@ -1,4 +1,4 @@
-# platform_visualizer.py ver 49
+# platform_visualizer.py ver 50
 """800x480 Panda3D proof-of-concept for the POC suspended platform emulator."""
 from __future__ import annotations
 
@@ -1422,6 +1422,17 @@ class PlatformVisualizer(ShowBase):
             rotation_delta = np.degrees(self.pose[3:] - self.pose_diff_pose[3:])
             pose_diff_diag = (f"\nPose difference: XYZ {np.linalg.norm(delta):.1f} mm, "
                             f"RPY {np.linalg.norm(rotation_delta):.1f} deg")
+        # The packet carries POC's applied pose as well as muscle lengths.  Show
+        # both signs explicitly to distinguish a camera-view reversal from a
+        # true forward-kinematics or channel-order mismatch.  A positive
+        # geometry Rx tilts POC -Y (rider right) downward when viewed from rear.
+        if (self.input_mode == "twin" and self.mode == "LENGTH"
+                and self.pose_diff_pose is not None):
+            commanded_roll = math.degrees(float(self.pose_diff_pose[3]))
+            solved_roll = math.degrees(float(self.pose[3]))
+            geometry_roll = solved_roll * float(self.platform.kin.FLIP_ROTATION[0])
+            pose_diff_diag += (f"\nRoll applied/solved: {commanded_roll:+.2f}/{solved_roll:+.2f} deg"
+                               f"  geometry Rx: {geometry_roll:+.2f} deg")
         self.ui.set_status(
             f"PLATFORM TWIN  {self.mode}:{detail}\n"
             f"Geometry: {self.geometry_name} ({self.source_name})\n"
